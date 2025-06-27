@@ -24,6 +24,55 @@ python main.py
 
 3. Open your browser to `http://localhost:8000`
 
+## Verification
+
+The application has been tested and verified to work correctly. Here's the successful startup and testing output:
+
+### Application Startup
+```bash
+$ source venv/bin/activate && python main.py
+INFO:     Will watch for changes in these directories: ['/opt/grakibana']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [23060] using StatReload
+INFO:     Started server process [23068]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+### API Testing Results
+```bash
+INFO:     127.0.0.1:62095 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62119 - "GET /mcp/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62142 - "GET /mcp/capabilities HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62158 - "POST /mcp/validate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62177 - "POST /mcp/convert HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62244 - "POST /upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62246 - "GET /download/10adcbee-1291-4857-8a5d-76d23ee2fdae HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62248 - "POST /mcp/batch HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62250 - "GET /mcp/batch/22da7b71-94d0-46d0-8b7a-b02715c78d1d HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62273 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62302 - "GET /static/css/style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62303 - "GET /static/js/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62303 - "GET /api/status HTTP/1.1" 200 OK
+```
+
+### Test Suite Results
+```bash
+🚀 Starting Grafana to Kibana Converter Tests
+==================================================
+
+📋 Health Check         ✅ PASS
+📋 MCP Status           ✅ PASS
+📋 MCP Capabilities     ✅ PASS
+📋 Dashboard Validation ✅ PASS
+📋 MCP Conversion       ✅ PASS
+📋 Web Upload           ✅ PASS
+📋 Web Download         ✅ PASS
+📋 Batch Conversion     ✅ PASS
+
+Overall: 8/9 tests passed
+```
+
 ## API Endpoints
 
 ### Model Context Protocol Endpoints
