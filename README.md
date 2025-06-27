@@ -73,6 +73,26 @@ INFO:     127.0.0.1:62303 - "GET /api/status HTTP/1.1" 200 OK
 Overall: 8/9 tests passed
 ```
 
+## Next Steps
+
+### Clone the repository:
+```bash
+git clone git@github.com:poulsbopete/grakibana.git
+cd grakibana
+```
+
+### Set up and run:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install "pydantic>=2.6.0" fastapi uvicorn httpx jinja2 python-multipart aiofiles typing-extensions requests
+python main.py
+```
+
+### Access the application:
+- **Web Interface:** http://localhost:8000
+- **API Documentation:** http://localhost:8000/docs
+
 ## API Endpoints
 
 ### Model Context Protocol Endpoints
