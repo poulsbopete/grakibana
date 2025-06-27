@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafana to Kibana Converter</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <i class="fas fa-exchange-alt text-blue-600 text-2xl mr-3"></i>
+                    <h1 class="text-2xl font-bold text-gray-900">Grafana to Kibana Converter</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Model Context Protocol</span>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        <span class="text-sm text-green-600">Online</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Upload Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Upload Dashboard</h2>
+            
+            <!-- File Upload Area -->
+            <div id="upload-area" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                <div class="space-y-4">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                    <div>
+                        <p class="text-lg font-medium text-gray-900">Drop your Grafana dashboard JSON file here</p>
+                        <p class="text-sm text-gray-500">or click to browse</p>
+                    </div>
+                    <input type="file" id="file-input" accept=".json" class="hidden">
+                    <button id="browse-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        Browse Files
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conversion Options -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="preserve-panel-ids" checked class="mr-2">
+                    <label for="preserve-panel-ids" class="text-sm text-gray-700">Preserve Panel IDs</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="convert-queries" checked class="mr-2">
+                    <label for="convert-queries" class="text-sm text-gray-700">Convert Queries</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="convert-visualizations" checked class="mr-2">
+                    <label for="convert-visualizations" class="text-sm text-gray-700">Convert Visualizations</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="convert-variables" checked class="mr-2">
+                    <label for="convert-variables" class="text-sm text-gray-700">Convert Variables</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="convert-annotations" checked class="mr-2">
+                    <label for="convert-annotations" class="text-sm text-gray-700">Convert Annotations</label>
+                </div>
+                <div>
+                    <label for="kibana-version" class="block text-sm text-gray-700 mb-1">Kibana Version</label>
+                    <select id="kibana-version" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <option value="8.11.0">8.11.0</option>
+                        <option value="8.0.0">8.0.0</option>
+                        <option value="7.0.0">7.0.0</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Convert Button -->
+            <div class="mt-6">
+                <button id="convert-btn" disabled class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+                    <i class="fas fa-cog mr-2"></i>
+                    Convert Dashboard
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progress-section" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Conversion Progress</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Status</span>
+                    <span id="conversion-status" class="text-sm font-medium">Processing...</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center justify-between text-sm text-gray-500">
+                    <span id="progress-text">Initializing...</span>
+                    <span id="progress-time">0ms</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Conversion Results</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Summary -->
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-3">Summary</h4>
+                    <div id="conversion-summary" class="space-y-2 text-sm">
+                        <!-- Summary will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-3">Actions</h4>
+                    <div class="space-y-3">
+                        <button id="download-btn" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                            <i class="fas fa-download mr-2"></i>
+                            Download Kibana Dashboard
+                        </button>
+                        <button id="preview-btn" class="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-eye mr-2"></i>
+                            Preview Conversion
+                        </button>
+                        <button id="new-conversion-btn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            New Conversion
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="error-section" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 hidden">
+            <div class="flex">
+                <i class="fas fa-exclamation-triangle text-red-400 mt-1 mr-3"></i>
+                <div>
+                    <h3 class="text-sm font-medium text-red-800">Conversion Failed</h3>
+                    <div id="error-message" class="mt-2 text-sm text-red-700">
+                        <!-- Error message will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Information -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">API Endpoints</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-2">Model Context Protocol</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium mr-2">POST</span>
+                            <code class="text-gray-700">/mcp/convert</code>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium mr-2">GET</span>
+                            <code class="text-gray-700">/mcp/status</code>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium mr-2">POST</span>
+                            <code class="text-gray-700">/mcp/batch</code>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-900 mb-2">Web Interface</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium mr-2">POST</span>
+                            <code class="text-gray-700">/upload</code>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium mr-2">GET</span>
+                            <code class="text-gray-700">/download/{file_id}</code>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium mr-2">POST</span>
+                            <code class="text-gray-700">/validate</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-sm text-gray-500">
+                <p>Grafana to Kibana Converter - Powered by Model Context Protocol</p>
+                <p class="mt-1">Version 1.0.0</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', path='/js/app.js') }}"></script>
+</body>
+</html> 
