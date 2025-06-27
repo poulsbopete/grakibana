@@ -12,6 +12,8 @@ import os
 
 from app.mcp import router as mcp_router
 from app.web import router as web_router
+from app.config import settings
+from app.llm_service import llm_service
 
 # Create FastAPI app
 app = FastAPI(
@@ -24,8 +26,8 @@ app = FastAPI(
 os.makedirs("static/css", exist_ok=True)
 os.makedirs("static/js", exist_ok=True)
 os.makedirs("templates", exist_ok=True)
-os.makedirs("uploads", exist_ok=True)
-os.makedirs("downloads", exist_ok=True)
+os.makedirs(settings.upload_dir, exist_ok=True)
+os.makedirs(settings.download_dir, exist_ok=True)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -37,13 +39,19 @@ app.include_router(web_router, tags=["Web Interface"])
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "service": "grafana-to-kibana-converter"}
+    return {
+        "status": "healthy", 
+        "service": "grafana-to-kibana-converter",
+        "environment": settings.environment,
+        "llm_enabled": llm_service.is_available(),
+        "llm_provider": settings.llm_provider if llm_service.is_available() else None
+    }
 
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        host=settings.host,
+        port=settings.port,
+        reload=settings.debug,
+        log_level=settings.log_level
     ) 

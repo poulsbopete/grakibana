@@ -9,8 +9,25 @@ A Model Context Protocol application that converts Grafana dashboards to Kibana 
 - **Batch Processing**: Convert multiple dashboards at once
 - **Real-time Conversion**: Live preview of conversion results
 - **Export Options**: Download converted Kibana dashboards in various formats
+- **LLM Integration**: Optional AI-powered intelligent conversion (OpenAI, Anthropic, Google AI)
 
 ## Quick Start
+
+### Option 1: Automated Setup (Recommended)
+
+1. **Run the setup script:**
+```bash
+python setup_env.py
+```
+
+2. **Follow the prompts** to configure your environment and LLM integration
+
+3. **Run the application:**
+```bash
+python main.py
+```
+
+### Option 2: Manual Setup
 
 1. Install dependencies:
 ```bash
@@ -23,6 +40,50 @@ python main.py
 ```
 
 3. Open your browser to `http://localhost:8000`
+
+## LLM Integration (Optional)
+
+The application supports optional LLM integration for intelligent conversion features:
+
+### Setup LLM Integration
+
+1. **Copy the environment template:**
+```bash
+cp config.env.example .env
+```
+
+2. **Configure your LLM provider in `.env`:**
+```bash
+# Choose your LLM provider
+LLM_PROVIDER=openai  # openai, anthropic, google
+OPENAI_API_KEY=your_openai_api_key_here
+# ANTHROPIC_API_KEY=your_anthropic_api_key_here
+# GOOGLE_AI_API_KEY=your_google_ai_api_key_here
+
+# Enable LLM features
+ENABLE_LLM_CONVERSION=true
+ENABLE_SMART_QUERY_TRANSLATION=true
+ENABLE_INTELLIGENT_MAPPING=true
+```
+
+3. **Install LLM dependencies:**
+```bash
+# For OpenAI
+pip install openai
+
+# For Anthropic
+pip install anthropic
+
+# For Google AI
+pip install google-generativeai
+```
+
+### LLM Features
+
+- **Smart Query Translation**: Automatically translate Grafana queries to Kibana format
+- **Intelligent Visualization Mapping**: AI-suggested best visualization types
+- **Configuration Optimization**: LLM-optimized panel configurations
+- **Conversion Validation**: AI-powered conversion quality assessment
 
 ## Verification
 
@@ -129,13 +190,17 @@ curl -X POST "http://localhost:8000/mcp/convert" \
 ```
 grakibana/
 ├── main.py                 # FastAPI application entry point
+├── setup_env.py           # Environment setup script
 ├── requirements.txt        # Python dependencies
+├── config.env.example      # Environment configuration template
 ├── app/
 │   ├── __init__.py
 │   ├── models.py          # Pydantic models
 │   ├── converter.py       # Dashboard conversion logic
 │   ├── mcp.py            # Model Context Protocol handlers
-│   └── web.py            # Web interface routes
+│   ├── web.py            # Web interface routes
+│   ├── config.py         # Configuration management
+│   └── llm_service.py    # LLM integration service
 ├── static/               # Static assets
 │   ├── css/
 │   └── js/
