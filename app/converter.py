@@ -7,6 +7,9 @@ import time
 import uuid
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+import json
+import copy
+import logging
 
 from .models import (
     GrafanaDashboard, 
@@ -15,6 +18,7 @@ from .models import (
     ConversionStatus,
     ConversionOptions
 )
+from app.llm_service import LLMService
 
 
 class DashboardConverter:
@@ -52,6 +56,8 @@ class DashboardConverter:
             'stackdriver': 'stackdriver'
         }
 
+        self.llm_service = LLMService()
+
     def convert_dashboard(self, grafana_dashboard: GrafanaDashboard, options: Optional[ConversionOptions] = None) -> ConversionResponse:
         """
         Convert a Grafana dashboard to Kibana format
@@ -68,6 +74,8 @@ class DashboardConverter:
         if options is None:
             options = ConversionOptions()
             
+        progress_callback = getattr(options, 'progress_callback', None)
+        
         try:
             # Create conversion response
             response = ConversionResponse(
@@ -76,7 +84,7 @@ class DashboardConverter:
             )
             
             # Convert the dashboard
-            kibana_dashboard = self._convert_to_kibana_format(grafana_dashboard, options)
+            kibana_dashboard = self._convert_to_kibana_format(grafana_dashboard, options, progress_callback)
             
             # Update response
             response.status = ConversionStatus.COMPLETED
@@ -97,7 +105,7 @@ class DashboardConverter:
             )
             return response
 
-    def _convert_to_kibana_format(self, grafana_dashboard: GrafanaDashboard, options: ConversionOptions) -> KibanaDashboard:
+    def _convert_to_kibana_format(self, grafana_dashboard: GrafanaDashboard, options: ConversionOptions, progress_callback=None) -> KibanaDashboard:
         """Convert Grafana dashboard to Kibana format"""
         
         # Generate unique ID for the dashboard
@@ -108,7 +116,7 @@ class DashboardConverter:
             "title": grafana_dashboard.title,
             "hits": 0,
             "description": "",
-            "panelsJSON": self._convert_panels(grafana_dashboard.panels, options),
+            "panelsJSON": self._convert_panels(grafana_dashboard.panels, options, progress_callback),
             "optionsJSON": self._convert_options(grafana_dashboard),
             "version": 1,
             "timeRestore": False,
@@ -137,16 +145,59 @@ class DashboardConverter:
         
         return kibana_dashboard
 
-    def _convert_panels(self, panels: List[Dict[str, Any]], options: ConversionOptions) -> str:
-        """Convert Grafana panels to Kibana format"""
+    def _convert_panels(self, panels: List[Dict[str, Any]], options: ConversionOptions, progress_callback=None) -> str:
+        """Convert Grafana panels to Kibana format, using AI if enabled"""
         kibana_panels = []
-        
-        for panel in panels:
-            kibana_panel = self._convert_single_panel(panel, options)
-            if kibana_panel:
+        total_panels = len(panels)
+        for idx, panel in enumerate(panels):
+            ai_used = False
+            kibana_panel = None
+            # Use AI for panel type and query translation if enabled
+            if self.llm_service.is_available():
+                prompt = self.llm_service.build_prompt_for_panel(panel)
+                try:
+                    ai_response = self.llm_service.query(prompt)
+                    # Suggest visualization type
+                    kibana_type = self.llm_service.suggest_visualization_type(panel)
+                    # Translate queries
+                    targets = panel.get('targets', [])
+                    ai_queries = []
+                    for target in targets:
+                        query = target.get('expr') or target.get('query') or ''
+                        datasource = target.get('datasource', panel.get('datasource', 'prometheus'))
+                        if query:
+                            translated = self.llm_service.translate_query(query, datasource, 'elasticsearch')
+                            if translated:
+                                ai_queries.append(translated)
+                                ai_used = True
+                            else:
+                                ai_queries.append(query)
+                        else:
+                            ai_queries.append('')
+                    # Build panel with AI suggestions
+                    kibana_panel = self._convert_single_panel(panel, options)
+                    if kibana_panel:
+                        if kibana_type:
+                            kibana_panel['type'] = kibana_type
+                            ai_used = True
+                        if ai_queries:
+                            if 'embeddableConfig' in kibana_panel and 'searchSource' in kibana_panel['embeddableConfig']:
+                                kibana_panel['embeddableConfig']['searchSource']['query'] = ai_queries[0] if len(ai_queries) == 1 else ai_queries
+                            ai_used = True
+                        kibana_panel['ai_converted'] = ai_used
+                except Exception as e:
+                    logging.getLogger("converter.ai").error(f"AI conversion failed for panel {panel.get('id')}: {e}")
+                    # Fallback to rule-based
+                    kibana_panel = self._convert_single_panel(panel, options)
+            else:
+                kibana_panel = self._convert_single_panel(panel, options)
+            if kibana_panel is not None:
+                kibana_panel['ai_converted'] = ai_used
                 kibana_panels.append(kibana_panel)
-        
-        return str(kibana_panels)
+            # Call progress_callback after each panel
+            if progress_callback:
+                progress_callback(idx + 1, total_panels, f"Processed panel {idx + 1} of {total_panels}")
+        return json.dumps(kibana_panels)
 
     def _convert_single_panel(self, panel: Dict[str, Any], options: ConversionOptions) -> Optional[Dict[str, Any]]:
         """Convert a single Grafana panel to Kibana format"""
@@ -331,8 +382,53 @@ class DashboardConverter:
             if 'targets' in panel:
                 for target in panel['targets']:
                     if 'datasource' in target:
-                        summary["datasources"].add(target['datasource'])
+                        ds = target['datasource']
+                        if isinstance(ds, dict):
+                            summary["datasources"].add(ds.get('name', str(ds)))
+                        else:
+                            summary["datasources"].add(str(ds))
         
         summary["datasources"] = list(summary["datasources"])
         
         return summary 
+
+    def export_to_ndjson(self, kibana_dashboard: KibanaDashboard) -> str:
+        """
+        Export a KibanaDashboard as newline-delimited JSON (ndjson) for Elastic/Kibana Serverless import.
+        Returns a string where each line is a JSON object.
+        """
+        obj = copy.deepcopy(kibana_dashboard.dict(exclude_none=True))
+        # Always re-serialize these fields as valid JSON strings
+        if "attributes" in obj:
+            for key in ["panelsJSON", "optionsJSON"]:
+                if key in obj["attributes"]:
+                    val = obj["attributes"][key]
+                    # If it's a string but not valid JSON, try to eval and re-dump
+                    if isinstance(val, str):
+                        try:
+                            # Try to parse as JSON
+                            val_json = json.loads(val)
+                        except Exception:
+                            # Try to eval Python repr
+                            import ast
+                            val_json = ast.literal_eval(val)
+                        obj["attributes"][key] = json.dumps(val_json)
+                    else:
+                        obj["attributes"][key] = json.dumps(val)
+            # kibanaSavedObjectMeta.searchSourceJSON
+            if "kibanaSavedObjectMeta" in obj["attributes"]:
+                meta = obj["attributes"]["kibanaSavedObjectMeta"]
+                if isinstance(meta, dict) and "searchSourceJSON" in meta:
+                    val = meta["searchSourceJSON"]
+                    if isinstance(val, str):
+                        try:
+                            val_json = json.loads(val)
+                        except Exception:
+                            import ast
+                            val_json = ast.literal_eval(val)
+                        meta["searchSourceJSON"] = json.dumps(val_json)
+                    else:
+                        meta["searchSourceJSON"] = json.dumps(val)
+        if obj.get("id") is None:
+            obj.pop("id")
+        return json.dumps(obj, separators=(",", ":")) + "\n" 

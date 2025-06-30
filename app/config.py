@@ -4,7 +4,14 @@ Configuration management for the Grafana to Kibana converter
 
 import os
 from typing import Optional
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
+
+# Explicitly load .env file early
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
+except ImportError:
+    pass  # If python-dotenv is not installed, rely on pydantic-settings or os.environ
 
 
 class Settings(BaseSettings):
@@ -36,8 +43,8 @@ class Settings(BaseSettings):
     max_file_size: int = 10485760  # 10MB
     
     # Security
-    secret_key: str = "your-secret-key-change-in-production"
-    cors_origins: str = "http://localhost:3000,http://localhost:8000"
+    secret_key: Optional[str] = None
+    cors_origins: Optional[str] = None
     
     # Database (for future use)
     database_url: Optional[str] = None
@@ -56,6 +63,8 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+print(f"[DEBUG] OPENAI_API_KEY loaded: {settings.openai_api_key}")
+print(f"[DEBUG] LLM_MODEL loaded: {settings.llm_model!r}")
 
 
 def get_llm_config():

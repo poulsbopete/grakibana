@@ -4,6 +4,7 @@ class DashboardConverter {
     constructor() {
         this.selectedFile = null;
         this.currentFileId = null;
+        this.currentJobId = null;
         this.init();
     }
 
@@ -24,7 +25,14 @@ class DashboardConverter {
         convertBtn.addEventListener('click', () => this.convertDashboard());
 
         // Action buttons
-        document.getElementById('download-btn').addEventListener('click', () => this.downloadDashboard());
+        document.getElementById('download-btn').addEventListener('click', () => {
+            console.log('Download .json button clicked');
+            this.downloadDashboard('json');
+        });
+        document.getElementById('download-ndjson-btn').addEventListener('click', () => {
+            console.log('Download .ndjson button clicked');
+            this.downloadDashboard('ndjson');
+        });
         document.getElementById('preview-btn').addEventListener('click', () => this.previewConversion());
         document.getElementById('new-conversion-btn').addEventListener('click', () => this.resetForm());
     }
@@ -127,8 +135,11 @@ class DashboardConverter {
 
             if (result.success) {
                 this.currentFileId = result.file_id;
-                this.updateProgress(100, 'Conversion completed!');
-                this.showResults(result);
+                this.currentJobId = result.job_id;
+                this.pollProgress(result.job_id, () => {
+                    this.updateProgress(100, 'Conversion completed!');
+                    this.showResults(result);
+                });
             } else {
                 this.showError(result.error || 'Conversion failed');
                 this.hideProgress();
@@ -137,6 +148,24 @@ class DashboardConverter {
             this.showError('Network error: ' + error.message);
             this.hideProgress();
         }
+    }
+
+    pollProgress(jobId, onComplete) {
+        const poll = async () => {
+            try {
+                const res = await fetch(`/progress/${jobId}`);
+                const data = await res.json();
+                this.updateProgress(data.progress, data.status);
+                if (data.progress < 100) {
+                    this._progressTimeout = setTimeout(poll, 500);
+                } else {
+                    if (onComplete) onComplete();
+                }
+            } catch (e) {
+                // Ignore polling errors
+            }
+        };
+        poll();
     }
 
     showProgress() {
@@ -221,15 +250,20 @@ class DashboardConverter {
         document.getElementById('error-section').classList.add('hidden');
     }
 
-    downloadDashboard() {
-        if (!this.currentFileId) return;
-        
+    downloadDashboard(format = 'json') {
+        console.log('downloadDashboard called', format, this.currentFileId);
+        if (!this.currentFileId) {
+            console.log('No fileId set!');
+            return;
+        }
+        let ext = format === 'ndjson' ? 'ndjson' : 'json';
         const link = document.createElement('a');
-        link.href = `/download/${this.currentFileId}`;
-        link.download = `kibana_dashboard_${this.currentFileId}.json`;
+        link.href = `/download/${this.currentFileId}?format=${ext}`;
+        link.download = `kibana_dashboard_${this.currentFileId}.${ext}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        console.log('Download link triggered:', link.href);
     }
 
     previewConversion() {
@@ -243,6 +277,7 @@ class DashboardConverter {
         // Reset file selection
         this.selectedFile = null;
         this.currentFileId = null;
+        this.currentJobId = null;
         
         // Reset upload area
         const uploadArea = document.getElementById('upload-area');
