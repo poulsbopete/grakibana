@@ -1,0 +1,14 @@
+{
+  "node_cpu_seconds_total": "system.process.cpu.total.value",
+  "node_memory_MemAvailable_bytes": "system.process.memory.size",
+  "node_filesystem_avail_bytes": "system.filesystem.available",
+  "node_filesystem_size_bytes": "system.filesystem.size",
+  "node_network_receive_bytes_total": "system.network.in.bytes",
+  "node_network_transmit_bytes_total": "system.network.out.bytes",
+  "node_load1": "system.load.1",
+  "node_load5": "system.load.5",
+  "node_load15": "system.load.15",
+  "node_processes_running": "system.process.summary.running",
+  "node_processes_blocked": "system.process.summary.blocked"
+  // Add more mappings as needed: "prometheus_metric": "elasticsearch_field"
+} 

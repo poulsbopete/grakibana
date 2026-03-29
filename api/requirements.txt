@@ -1,0 +1,2 @@
+# Vercel installs deps from this file for api/*.py functions (root requirements.txt is not always used).
+-r ../requirements.txt

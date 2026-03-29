@@ -1,0 +1,26 @@
+{
+  "id": "8776cbec-a5a2-43db-9839-b9f8a5ea08dc",
+  "type": "dashboard",
+  "attributes": {
+    "title": "Sample System Metrics Dashboard",
+    "hits": 0,
+    "description": "",
+    "panelsJSON": "[{'type': 'visualization', 'id': 1, 'panelIndex': 8, 'gridData': {'x': 0, 'y': 0, 'w': 12, 'h': 8, 'i': 1}, 'version': '8.0.0', 'embeddableConfig': {'vis': {'type': 'line', 'params': {'type': 'metric', 'metric': {'percentageMode': True, 'useRanges': True, 'colorSchema': 'Green to Red', 'metricColorMode': 'Labels', 'numberFormat': 'number', 'colorFullBackground': False}}}, 'searchSource': {'query': {'query': '', 'language': 'kuery'}}}, 'title': 'CPU Usage', 'savedObjectId': '4317d9f2-113c-4f76-a9d7-ab3c18526e83'}, {'type': 'visualization', 'id': 2, 'panelIndex': 8, 'gridData': {'x': 12, 'y': 0, 'w': 12, 'h': 8, 'i': 2}, 'version': '8.0.0', 'embeddableConfig': {'vis': {'type': 'metric', 'params': {'type': 'metric', 'metric': {'percentageMode': True, 'useRanges': True, 'colorSchema': 'Green to Red', 'metricColorMode': 'Labels', 'numberFormat': 'number', 'colorFullBackground': False}}}, 'searchSource': {'query': {'query': '', 'language': 'kuery'}}}, 'title': 'Memory Usage', 'savedObjectId': 'cd10f43b-55d5-4994-8e64-f71353bf5d96'}, {'type': 'visualization', 'id': 3, 'panelIndex': 8, 'gridData': {'x': 0, 'y': 8, 'w': 24, 'h': 8, 'i': 3}, 'version': '8.0.0', 'embeddableConfig': {'searchSource': {'query': {'query': '', 'language': 'kuery'}}}, 'title': 'Disk Usage', 'savedObjectId': '81c17ff4-cd08-4055-b337-9e6457385bb6'}, {'type': 'visualization', 'id': 4, 'panelIndex': 8, 'gridData': {'x': 0, 'y': 16, 'w': 12, 'h': 8, 'i': 4}, 'version': '8.0.0', 'embeddableConfig': {'vis': {'type': 'line', 'params': {'type': 'metric', 'metric': {'percentageMode': False, 'useRanges': True, 'colorSchema': 'Green to Red', 'metricColorMode': 'Labels', 'numberFormat': 'number', 'colorFullBackground': False}}}, 'searchSource': {'query': {'query': '', 'language': 'kuery'}}}, 'title': 'Network Traffic', 'savedObjectId': '20439d2f-6f24-4338-8d19-226667779c77'}, {'type': 'visualization', 'id': 5, 'panelIndex': 8, 'gridData': {'x': 12, 'y': 16, 'w': 12, 'h': 8, 'i': 5}, 'version': '8.0.0', 'embeddableConfig': {'searchSource': {'query': {'query': '', 'language': 'kuery'}}}, 'title': 'System Load', 'savedObjectId': '791d6498-333c-44e3-8c26-6530fb0723c2'}]",
+    "optionsJSON": "{'hidePanelTitles': False, 'useMargins': True, 'syncColors': False, 'syncCursor': True, 'syncTooltips': False, 'hideAllLegends': False}",
+    "version": 1,
+    "timeRestore": false,
+    "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{'query': {'query': '', 'language': 'kuery'}, 'filter': [], 'highlight': {'pre_tags': ['@kibana-highlighted-field@'], 'post_tags': ['@/kibana-highlighted-field@'], 'fields': {'*': {}}, 'require_field_match': False, 'fragment_size': 2147483647}}"
+    }
+  },
+  "references": [],
+  "migrationVersion": {
+    "dashboard": "8.0.0"
+  },
+  "coreMigrationVersion": "8.0.0",
+  "updated_at": "2025-06-27T21:48:02.921143",
+  "created_at": "2025-06-27T21:48:02.921146",
+  "version": "1",
+  "namespaces": null,
+  "originId": null
+}

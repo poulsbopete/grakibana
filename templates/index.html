@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafana to Kibana Converter</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <!-- EDOT Browser — Real User Monitoring via OpenTelemetry -->
+    <script src="https://unpkg.com/@elastic/opentelemetry-browser/build/elastic-otel-browser.min.js" crossorigin></script>
+    <script>
+      startBrowserSdk({
+        serviceName: 'grakibana',
+        otlpEndpoint: '/ingest/otlp',
+      });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .content {
+            padding: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .option-group {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .option-group label {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        select, input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+        .btn-secondary:hover {
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .result pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .sample-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .sample-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Grafana to Kibana Converter</h1>
+            <p>Paste your Grafana dashboard JSON and convert it to Kibana format</p>
+        </div>
+        
+        <div class="content">
+            <form id="converter-form">
+                <div class="form-group">
+                    <label for="dashboard-json">
+                        Grafana Dashboard JSON
+                        <button type="button" class="sample-btn" onclick="loadSample()">Load Sample</button>
+                    </label>
+                    <textarea 
+                        id="dashboard-json" 
+                        name="dashboard_json" 
+                        placeholder="Paste your Grafana dashboard JSON here..."
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="options">
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" name="preserve_panel_ids" value="true" checked>
+                            Preserve Panel IDs
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" name="convert_queries" value="true" checked>
+                            Convert Queries
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" name="convert_visualizations" value="true" checked>
+                            Convert Visualizations
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" name="convert_variables" value="true" checked>
+                            Convert Variables
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label>
+                            <input type="checkbox" name="convert_annotations" value="true" checked>
+                            Convert Annotations
+                        </label>
+                    </div>
+                    <div class="option-group">
+                        <label for="target-version">Target Kibana Version:</label>
+                        <select id="target-version" name="target_kibana_version">
+                            <option value="serverless" selected>Serverless</option>
+                            <option value="8.11.0">8.11.0</option>
+                            <option value="8.10.0">8.10.0</option>
+                            <option value="8.9.0">8.9.0</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="convert-btn">
+                    🔄 Convert to Kibana
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                    🗑️ Clear
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Converting dashboard...</p>
+            </div>
+
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const sampleDashboard = {
+            "title": "Sample Dashboard",
+            "uid": "sample-dashboard",
+            "version": 1,
+            "time": {
+                "from": "now-6h",
+                "to": "now"
+            },
+            "timezone": "browser",
+            "refresh": "5s",
+            "schemaVersion": 30,
+            "style": "dark",
+            "tags": ["sample"],
+            "panels": [
+                {
+                    "id": 1,
+                    "title": "Sample Panel",
+                    "type": "graph",
+                    "gridPos": {
+                        "x": 0,
+                        "y": 0,
+                        "w": 12,
+                        "h": 8
+                    },
+                    "targets": [
+                        {
+                            "expr": "up",
+                            "legendFormat": "{{instance}}",
+                            "refId": "A"
+                        }
+                    ],
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "palette-classic"
+                            }
+                        }
+                    }
+                }
+            ]
+        };
+
+        function loadSample() {
+            document.getElementById('dashboard-json').value = JSON.stringify(sampleDashboard, null, 2);
+        }
+
+        function clearForm() {
+            document.getElementById('dashboard-json').value = '';
+            document.getElementById('result').style.display = 'none';
+        }
+
+        document.getElementById('converter-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const jsonData = document.getElementById('dashboard-json').value;
+            
+            if (!jsonData.trim()) {
+                showResult('Please paste some JSON data', 'error');
+                return;
+            }
+
+            // Validate JSON
+            try {
+                JSON.parse(jsonData);
+            } catch (error) {
+                showResult('Invalid JSON format: ' + error.message, 'error');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const convertBtn = document.getElementById('convert-btn');
+            
+            loading.style.display = 'block';
+            convertBtn.disabled = true;
+            convertBtn.textContent = 'Converting...';
+
+            try {
+                const requestBody = {
+                    dashboard_json: jsonData,
+                    preserve_panel_ids: formData.get('preserve_panel_ids') === 'true',
+                    convert_queries: formData.get('convert_queries') === 'true',
+                    convert_visualizations: formData.get('convert_visualizations') === 'true',
+                    convert_variables: formData.get('convert_variables') === 'true',
+                    convert_annotations: formData.get('convert_annotations') === 'true',
+                    target_kibana_version: formData.get('target_kibana_version')
+                };
+                
+                console.log('Sending request:', requestBody);
+                
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const result = await response.json();
+                console.log('Response body:', result);
+                
+                if (response.ok) {
+                    // Store the converted dashboard globally
+                    lastConvertedDashboard = result.kibana_dashboard;
+                    
+                    showResult(`
+                        <h3>✅ Conversion Successful!</h3>
+                        <p><strong>Conversion ID:</strong> ${result.conversion_id}</p>
+                        <p><strong>Time:</strong> ${result.conversion_time_ms}ms</p>
+                        <h4>Converted Kibana Dashboard:</h4>
+                        <pre>${JSON.stringify(result.kibana_dashboard, null, 2)}</pre>
+                        <button class="btn" onclick="copyLastDashboard()">
+                            📋 Copy to Clipboard (JSON)
+                        </button>
+                        <button class="btn" onclick="copyLastDashboardNDJSON()">
+                            📋 Copy to Clipboard (NDJSON)
+                        </button>
+                    `, 'success');
+                } else {
+                    const errorMsg = result.error || result.detail || result.message || 'Unknown error';
+                    showResult(`❌ Conversion failed: ${errorMsg}`, 'error');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                if (error.message.includes('Forbidden') || error.message.includes('403')) {
+                    showResult(`❌ Access Forbidden: This might be due to browser security policies or API Gateway restrictions. Try using the API directly with curl or check the browser console for more details.`, 'error');
+                } else {
+                    showResult(`❌ Network error: ${error.message}`, 'error');
+                }
+            } finally {
+                loading.style.display = 'none';
+                convertBtn.disabled = false;
+                convertBtn.textContent = '🔄 Convert to Kibana';
+            }
+        });
+
+        // Global variable to store the last converted dashboard
+        let lastConvertedDashboard = null;
+
+        function showResult(content, type) {
+            const result = document.getElementById('result');
+            result.innerHTML = content;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+            result.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Test API connectivity
+        async function testApi() {
+            try {
+                const response = await fetch('/health');
+                const result = await response.json();
+                console.log('API Health Check:', result);
+                return true;
+            } catch (error) {
+                console.error('API Health Check Failed:', error);
+                return false;
+            }
+        }
+
+        // Test API on page load
+        window.addEventListener('load', function() {
+            testApi().then(isHealthy => {
+                if (!isHealthy) {
+                    showResult('⚠️ Warning: API connectivity test failed. Some features may not work properly.', 'error');
+                }
+            });
+        });
+
+        function copyToClipboard(text) {
+            console.log('copyToClipboard called with text:', text);
+            console.log('Text type:', typeof text);
+            console.log('Text length:', text.length);
+            console.log('First 50 characters:', text.substring(0, 50));
+            
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('Successfully copied to clipboard');
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                console.log('Used fallback copy method');
+                alert('Copied to clipboard!');
+            });
+        }
+
+        function copyLastDashboard() {
+            if (lastConvertedDashboard) {
+                // Ensure we have clean JSON by re-parsing and re-stringifying
+                try {
+                    const cleanJson = JSON.parse(JSON.stringify(lastConvertedDashboard));
+                    const jsonString = JSON.stringify(cleanJson, null, 2);
+                    
+                    console.log('Copying JSON to clipboard:', jsonString);
+                    console.log('JSON length:', jsonString.length);
+                    console.log('First 100 characters:', jsonString.substring(0, 100));
+                    console.log('JSON starts with:', jsonString.charCodeAt(0), jsonString.charCodeAt(1));
+                    
+                    // Validate the JSON before copying
+                    JSON.parse(jsonString);
+                    copyToClipboard(jsonString);
+                } catch (error) {
+                    console.error('Error preparing JSON for copy:', error);
+                    alert('Error preparing JSON for copy: ' + error.message);
+                }
+            } else {
+                alert('No dashboard to copy!');
+            }
+        }
+
+        function copyLastDashboardNDJSON() {
+            if (lastConvertedDashboard) {
+                try {
+                    // Create NDJSON format (single line JSON without pretty formatting)
+                    const ndjsonString = JSON.stringify(lastConvertedDashboard);
+                    
+                    console.log('Copying NDJSON to clipboard:', ndjsonString);
+                    console.log('NDJSON length:', ndjsonString.length);
+                    console.log('First 100 characters:', ndjsonString.substring(0, 100));
+                    
+                    copyToClipboard(ndjsonString);
+                } catch (error) {
+                    console.error('Error preparing NDJSON for copy:', error);
+                    alert('Error preparing NDJSON for copy: ' + error.message);
+                }
+            } else {
+                alert('No dashboard to copy!');
+            }
+        }
+    </script>
+</body>
+</html> 

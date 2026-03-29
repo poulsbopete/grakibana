@@ -1,0 +1,26 @@
+{
+  "id": "9d57b844-ff58-40f6-96b3-d6a765512124",
+  "type": "dashboard",
+  "attributes": {
+    "title": "Test",
+    "hits": 0,
+    "description": "",
+    "panelsJSON": "[]",
+    "optionsJSON": "{\"hidePanelTitles\": false, \"useMargins\": true, \"syncColors\": false, \"syncCursor\": true, \"syncTooltips\": false, \"hideAllLegends\": false}",
+    "version": 1,
+    "timeRestore": false,
+    "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{\"query\": {\"query\": \"\", \"language\": \"kuery\"}, \"filter\": [], \"highlight\": {\"pre_tags\": [\"@kibana-highlighted-field@\"], \"post_tags\": [\"@/kibana-highlighted-field@\"], \"fields\": {\"*\": {}}, \"require_field_match\": false, \"fragment_size\": 2147483647}}"
+    }
+  },
+  "references": [],
+  "migrationVersion": {
+    "dashboard": "8.0.0"
+  },
+  "coreMigrationVersion": "8.0.0",
+  "updated_at": "2025-07-02T18:00:35.372386",
+  "created_at": "2025-07-02T18:00:35.372390",
+  "version": "1",
+  "namespaces": null,
+  "originId": null
+}

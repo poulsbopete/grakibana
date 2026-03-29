@@ -1,0 +1,2 @@
+# Root main.py triggers Vercel FastAPI auto-detection and a separate bundle without api/requirements.txt.
+main.py
