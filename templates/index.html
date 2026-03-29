@@ -8,9 +8,11 @@
     <!-- EDOT Browser — Real User Monitoring via OpenTelemetry -->
     <script src="https://unpkg.com/@elastic/opentelemetry-browser/build/elastic-otel-browser.min.js" crossorigin></script>
     <script>
+      // EDOT Browser requires an absolute URL (new URL(otlpEndpoint) fails for relative paths).
+      // Trailing slash is required so the SDK joins "v1/traces" as /ingest/otlp/v1/traces, not .../otlpv1/traces.
       startBrowserSdk({
         serviceName: 'grakibana',
-        otlpEndpoint: '/ingest/otlp',
+        otlpEndpoint: new URL('/ingest/otlp/', window.location.origin).href,
       });
     </script>
     <style>
