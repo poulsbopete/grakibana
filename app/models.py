@@ -2,7 +2,7 @@
 Pydantic models for the Grafana to Kibana converter
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Dict, List, Optional, Any, Union
 from enum import Enum
 import uuid
@@ -59,7 +59,6 @@ class ConversionRequest(BaseModel):
     """Request model for dashboard conversion"""
     dashboard: GrafanaDashboard
     options: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    target_version: Optional[str] = "8.11.0"
 
 
 class ConversionResponse(BaseModel):
@@ -78,7 +77,6 @@ class BatchConversionRequest(BaseModel):
     """Request model for batch dashboard conversion"""
     dashboards: List[GrafanaDashboard]
     options: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    target_version: Optional[str] = "8.11.0"
 
 
 class BatchConversionResponse(BaseModel):
@@ -93,13 +91,14 @@ class BatchConversionResponse(BaseModel):
 
 
 class ConversionOptions(BaseModel):
-    """Options for dashboard conversion"""
+    """Options for dashboard conversion (Kibana output: Elastic Cloud Serverless only)."""
+    model_config = ConfigDict(extra="allow")  # e.g. progress_callback from web upload handler
+
     preserve_panel_ids: bool = True
     convert_queries: bool = True
     convert_visualizations: bool = True
     convert_variables: bool = True
     convert_annotations: bool = True
-    target_kibana_version: str = "8.11.0"
     index_pattern_mapping: Optional[Dict[str, str]] = None
 
 

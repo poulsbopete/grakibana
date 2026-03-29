@@ -197,7 +197,7 @@ async def get_capabilities() -> Dict[str, Any]:
             "max_panels_per_dashboard": 100,
             "max_batch_size": 50,
             "supported_grafana_versions": ["7.0.0", "8.0.0", "9.0.0", "10.0.0"],
-            "supported_kibana_versions": ["7.0.0", "8.0.0", "8.11.0"]
+            "supported_kibana_versions": ["serverless"]
         }
     }
 

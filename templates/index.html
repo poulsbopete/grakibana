@@ -278,16 +278,10 @@
                             Convert Annotations
                         </label>
                     </div>
-                    <div class="option-group">
-                        <label for="target-version">Target Kibana Version:</label>
-                        <select id="target-version" name="target_kibana_version">
-                            <option value="serverless" selected>Serverless</option>
-                            <option value="8.11.0">8.11.0</option>
-                            <option value="8.10.0">8.10.0</option>
-                            <option value="8.9.0">8.9.0</option>
-                        </select>
-                    </div>
                 </div>
+                <p class="target-hint" style="margin: 0 0 16px 0; font-size: 0.9rem; color: #6b7280;">
+                    Output format: <strong>Elastic Cloud Serverless</strong> (Kibana) only.
+                </p>
 
                 <button type="submit" class="btn" id="convert-btn">
                     🔄 Convert to Kibana
@@ -391,8 +385,7 @@
                     convert_queries: formData.get('convert_queries') === 'true',
                     convert_visualizations: formData.get('convert_visualizations') === 'true',
                     convert_variables: formData.get('convert_variables') === 'true',
-                    convert_annotations: formData.get('convert_annotations') === 'true',
-                    target_kibana_version: formData.get('target_kibana_version')
+                    convert_annotations: formData.get('convert_annotations') === 'true'
                 };
                 
                 console.log('Sending request:', requestBody);

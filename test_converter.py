@@ -101,7 +101,6 @@ def test_dashboard_conversion():
                 "convert_visualizations": True,
                 "convert_variables": True,
                 "convert_annotations": True,
-                "target_kibana_version": "8.11.0"
             }
         }
         
@@ -135,7 +134,6 @@ def test_web_upload():
                 'convert_visualizations': True,
                 'convert_variables': True,
                 'convert_annotations': True,
-                'target_kibana_version': '8.11.0'
             }
             
             response = requests.post(f"{BASE_URL}/upload", files=files, data=data)
@@ -212,7 +210,6 @@ def test_batch_conversion():
                 "convert_visualizations": True,
                 "convert_variables": True,
                 "convert_annotations": True,
-                "target_kibana_version": "8.11.0"
             }
         }
         

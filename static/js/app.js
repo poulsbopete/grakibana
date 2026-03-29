@@ -120,7 +120,6 @@ class DashboardConverter {
         formData.append('convert_visualizations', document.getElementById('convert-visualizations').checked);
         formData.append('convert_variables', document.getElementById('convert-variables').checked);
         formData.append('convert_annotations', document.getElementById('convert-annotations').checked);
-        formData.append('target_kibana_version', document.getElementById('kibana-version').value);
 
         this.showProgress();
         this.updateProgress(0, 'Starting conversion...');

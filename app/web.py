@@ -52,7 +52,6 @@ async def upload_dashboard(
     convert_visualizations: bool = Form(True),
     convert_variables: bool = Form(True),
     convert_annotations: bool = Form(True),
-    target_kibana_version: str = Form("serverless")
 ):
     """
     Upload and convert a Grafana dashboard file
@@ -69,17 +68,6 @@ async def upload_dashboard(
         # Validate dashboard
         if not converter.validate_grafana_dashboard(dashboard_data):
             raise HTTPException(status_code=400, detail="Invalid Grafana dashboard format")
-        
-        # Create conversion options
-        is_serverless = (target_kibana_version == "serverless")
-        options = ConversionOptions(
-            preserve_panel_ids=preserve_panel_ids,
-            convert_queries=convert_queries,
-            convert_visualizations=convert_visualizations,
-            convert_variables=convert_variables,
-            convert_annotations=convert_annotations,
-            target_kibana_version=target_kibana_version
-        )
         
         # Convert dashboard
         from .models import GrafanaDashboard
@@ -103,7 +91,6 @@ async def upload_dashboard(
                 convert_visualizations=convert_visualizations,
                 convert_variables=convert_variables,
                 convert_annotations=convert_annotations,
-                target_kibana_version=target_kibana_version,
                 progress_callback=progress_callback
             )
         )
@@ -203,7 +190,6 @@ async def convert_dashboard_json(request: Request):
             convert_visualizations=body.get("convert_visualizations", True),
             convert_variables=body.get("convert_variables", True),
             convert_annotations=body.get("convert_annotations", True),
-            target_kibana_version=body.get("target_kibana_version", "serverless")
         )
         
         # Convert dashboard
