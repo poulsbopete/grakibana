@@ -2,7 +2,7 @@
 Pydantic models for the Grafana to Kibana converter
 """
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import Dict, List, Optional, Any, Union
 from enum import Enum
 import uuid
@@ -19,6 +19,17 @@ class ConversionStatus(str, Enum):
 
 class GrafanaDashboard(BaseModel):
     """Grafana dashboard model"""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_grafana_variants(cls, data: Any) -> Any:
+        """Accept classic JSON or Grafana Kubernetes app / Cloud v2beta1 (dashboard.grafana.app)."""
+        if isinstance(data, dict):
+            from .grafana_normalize import normalize_grafana_dashboard
+
+            return normalize_grafana_dashboard(data)
+        return data
+
     title: str
     uid: Optional[str] = None
     version: Optional[int] = 1

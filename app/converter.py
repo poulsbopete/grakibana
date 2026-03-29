@@ -19,6 +19,7 @@ from .models import (
     ConversionOptions
 )
 from app.llm_service import LLMService
+from app.grafana_normalize import normalize_grafana_dashboard
 
 
 class DashboardConverter:
@@ -382,16 +383,12 @@ class DashboardConverter:
         return references
 
     def validate_grafana_dashboard(self, dashboard_data: Dict[str, Any]) -> bool:
-        """Validate that the input is a valid Grafana dashboard"""
-        required_fields = ['title', 'panels']
-        
-        for field in required_fields:
-            if field not in dashboard_data:
-                return False
-        
-        if not isinstance(dashboard_data.get('panels', []), list):
+        """Validate that the input is a valid Grafana dashboard (classic or v2beta1)."""
+        d = normalize_grafana_dashboard(dashboard_data)
+        if "title" not in d or "panels" not in d:
             return False
-        
+        if not isinstance(d.get("panels", []), list):
+            return False
         return True
 
     def get_conversion_summary(self, grafana_dashboard: GrafanaDashboard) -> Dict[str, Any]:
