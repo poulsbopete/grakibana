@@ -10,8 +10,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -20,6 +20,12 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Node (Next.js frontend)
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
 
 # Virtual environments
 venv/
@@ -77,3 +83,4 @@ coverage.xml
 *.temp
 temp/
 tmp/ 
+.vercel

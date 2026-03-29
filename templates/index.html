@@ -14,14 +14,60 @@
       });
     </script>
     <style>
+        /* CSS analogue of GradientDots (framer-motion lives in frontend/ for Next.js) */
+        .gradient-dots-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-color: #eef0f7;
+            background-image:
+                radial-gradient(circle at 50% 50%, transparent 1.5px, #eef0f7 0 8px, transparent 8px),
+                radial-gradient(circle at 50% 50%, transparent 1.5px, #eef0f7 0 8px, transparent 8px),
+                radial-gradient(circle at 50% 50%, #f00, transparent 60%),
+                radial-gradient(circle at 50% 50%, #ff0, transparent 60%),
+                radial-gradient(circle at 50% 50%, #0f0, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, #00f, transparent 60%);
+            background-size:
+                10px 17.32px,
+                10px 17.32px,
+                200% 200%,
+                200% 200%,
+                200% 200%,
+                200% 17.32px;
+            background-position:
+                0 0, 5px 8.66px,
+                0% 0%, 0% 0%, 0% 0%, 0 0;
+            animation:
+                gradient-dots-shift 30s linear infinite,
+                gradient-dots-hue 6s linear infinite;
+        }
+        @keyframes gradient-dots-shift {
+            0% {
+                background-position:
+                    0 0, 5px 8.66px,
+                    800% 400%, 1000% -400%, -1200% -600%, 400% 17.32px;
+            }
+            100% {
+                background-position:
+                    0 0, 5px 8.66px,
+                    0% 0%, 0% 0%, 0% 0%, 0 0;
+            }
+        }
+        @keyframes gradient-dots-hue {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            position: relative;
         }
         .container {
+            position: relative;
+            z-index: 1;
             max-width: 1200px;
             margin: 0 auto;
             background: white;
@@ -179,6 +225,7 @@
     </style>
 </head>
 <body>
+    <div class="gradient-dots-bg" aria-hidden="true"></div>
     <div class="container">
         <div class="header">
             <h1>🔄 Grafana to Kibana Converter</h1>
